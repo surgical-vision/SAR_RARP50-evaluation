@@ -1,0 +1,11 @@
+monai==0.9.1
+numpy==1.23.1
+opencv-python-headless==4.6.0.66
+pandas==1.4.3
+python-dateutil==2.8.2
+pytz==2022.1
+scipy==1.9.0
+six==1.16.0
+torch==1.12.0
+tqdm==4.64.0
+typing_extensions==4.3.0
