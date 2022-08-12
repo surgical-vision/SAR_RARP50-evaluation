@@ -7,7 +7,12 @@ reference for 50 RARP procedure clips, focusing on the DVC suturing phase of the
 procedure. For more information about the dataset and the challenge please visit
 the [page of the challenge](https://www.synapse.org/#!Synapse:syn27618412/wiki/)
 
-## Building a docker image
+## Setup
+
+To run the SAR-RARP50 code you need to either build a docker image using the provided
+Dockerfile or alternatively use vscode dev containers.
+
+### Building a docker image
 
 We recommend using a docker container to run the SAR-RARP50 toolkit code.
 Currently, we only support building this docker image from source:
@@ -73,6 +78,9 @@ Currently, the codebase supports the following command:
 - unpack: extracts images from the downloaded videos at 10Hz
 - generate: generates mock predictions that serve as an example to the SAR-RARP50 expected prediction format
 
+
+We also provide the corresponding python scripts in case you use devcontainers.
+
 ### Unpack videos to rgb images(10Hz)
 
 During the SAR-RARP50challenge we provide zip files of each video sequence and
@@ -81,11 +89,19 @@ directory structure as described [here](https://www.synapse.org/#!Synapse:syn276
 After unpacking the .zip files videos need to be sampled at 10Hz which can be done
 by running the following
 
+Docker container:
+
 ``` bash
 docker container run --rm \
                      -v /path_to_root_data_dir/:/data/ \
                      sarrarp_tk \
                      unpack /data/ -j4 -r 
+```
+
+devcontainer:
+
+``` bash
+python -m scripts.sarrarp_tk unpack /path_to_root_data_dir/ -j4 -r 
 ```
 
 The `unpack` script exposes the following command line interface
@@ -105,6 +121,12 @@ docker container run --rm \
                      -v /path_to_root_data_dir/:/data/ \
                      sarrarp_tk \
                      generate /data/test/ /data/mock_predictions/ 
+```
+
+devcontainer:
+
+``` bash
+python -m scripts.sarrarp_tk generate /path_to_root_data_dir/test/ /path_to_root_data_dir/mock_predictions/ 
 ```
 
 The `generate` script exposes the following command line interface
@@ -132,6 +154,12 @@ docker container run --rm \
                      -v /path_to_root_data_dir/:/data/ \
                      sarrarp_tk \
                      evaluate /data/custom_ref_set/ /data/predictions/ 
+```
+
+devcontainer:
+
+``` bash
+python -m scripts.sarrarp_tk evaluate /path_to_root_data_dir/custom_ref_set/ /path_to_root_data_dir/predictions/ 
 ```
 
 The `evaluate` script exposes the following command line interface
