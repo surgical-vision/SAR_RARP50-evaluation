@@ -30,15 +30,13 @@ def reference_sequence_len(ref_dir):
         n_vid_frames = video_len(ref_dir/'video_left.avi')
         n_action_frames = int((n_vid_frames-1)//6)+1
         n_seg_frames = int((n_vid_frames-1)//60)+1
-        print(n_vid_frames, n_action_frames, n_seg_frames)
     elif (ref_dir/'rgb').is_dir():
         n_action_frames = len(list((ref_dir/'rgb').iterdir()))
-        print(n_action_frames)
         n_seg_frames = ((n_action_frames-1)//10)+1
     elif (ref_dir/'action_discrete.txt').is_file():# get number of frames from the reference action recognition file
         with open(ref_dir/'action_discrete.txt') as ar:
             n_action_frames = len(ar.readlines())
-        n_seg_frames = n_action_frames//6
+        n_seg_frames = ((n_action_frames-1)//10)+1
     elif (ref_dir/'segmentation').is_dir():
         n_seg_frames = len(list((ref_dir/'segmentation').iterdir()))
     
