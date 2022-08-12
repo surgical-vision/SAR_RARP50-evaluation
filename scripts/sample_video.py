@@ -42,7 +42,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('video_dir', help='path pointing to the video directory')
+    parser.add_argument('data_dir', help='path pointing to the video directory')
     parser.add_argument('-r', '--recursive', help='search recursively for video directories that have video_left.avi as a child', action='store_true')
     parser.add_argument('-j', '--jobs', help='number of parallel works to use when saving images', default=4, type=int)
 
