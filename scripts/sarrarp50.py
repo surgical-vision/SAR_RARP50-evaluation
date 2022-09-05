@@ -25,7 +25,8 @@ if __name__ == "__main__":
         
     elif cmd_tool.command == 'unpack':
         parser = argparse.ArgumentParser()
-        parser.add_argument('video_dir', help='path pointing to the video directory')
+        parser.add_argument('data_dir', help='path pointing to the video or dataset directory')
+        parser.add_argument('-f', '--frequency', type=int, help='sampling rate in Hz', choices= [1, 10], default=10)
         parser.add_argument('-r', '--recursive', help='search recursively for video directories that have video_left.avi as a child', action='store_true')
         parser.add_argument('-j', '--jobs', help='number of parallel works to use when saving images', default=4, type=int)
         args = parser.parse_args(sys.argv[2:])

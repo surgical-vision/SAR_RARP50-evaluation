@@ -20,13 +20,15 @@ def sample_video(video_path:Path, extract_dir:Path, sampling_period:int=6, jobs:
     vid.release()
 
 def main(args):
-    sampiling_period:int =6 # please leave this unchanged otherwise the rest of the files will not be compatible with the sampled rgb frames
+
+    video_fps = 60 # all the sarrarp50 videos are recorded at 60 fps
+    sampiling_period:int =video_fps//args.frequency
 
     # find all the files that need to be processed
     if not args.recursive:
-        video_dirs = [Path(args.video_dir).resolve()]
+        video_dirs = [Path(args.data_dir).resolve()]
     else:
-        video_dirs = [v_p.parent for v_p in Path(args.video_dir).rglob('*video_left.avi')]
+        video_dirs = [v_p.parent for v_p in Path(args.data_dir).rglob('*video_left.avi')]
     # validate paths
     for directory in video_dirs:
         if not (directory.exists() and (directory/'video_left.avi').exists()):
@@ -43,6 +45,7 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('data_dir', help='path pointing to the video directory')
+    parser.add_argument('-f', '--frequency', type=int, help='sampling rate in Hz', choices= [1, 10], default=10)
     parser.add_argument('-r', '--recursive', help='search recursively for video directories that have video_left.avi as a child', action='store_true')
     parser.add_argument('-j', '--jobs', help='number of parallel works to use when saving images', default=4, type=int)
 
