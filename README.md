@@ -9,8 +9,13 @@ the [page of the challenge](https://www.synapse.org/#!Synapse:syn27618412/wiki/)
 
 ## Setup
 
-To run the SAR-RARP50 code you need to either build a docker image using the provided
-Dockerfile or alternatively use vscode dev containers.
+The toolkit can be installed using pip and used as a command line tool, or by building a docker image and run as a container.  
+
+### install with pip
+
+``` bash 
+pip install git+https://github.com/surgical-vision/SAR_RARP50-evaluation
+```
 
 ### Building a docker image
 
@@ -31,6 +36,7 @@ docker image build -t sarrarp_tk .
 
 ## How to use
 
+
 We provide scripts to perform data preprocessing and method evaluation.
 For the SAR-RARP50 Endovis challenge we also provide code to generate
 mock predictions in the format we expect competing methods to export results.
@@ -41,6 +47,12 @@ stored under the SAR-RARP50 dataset directory.
 
 For each command, you will need to run the docker container as follows:
 
+package:
+``` bash 
+rarptk command args
+```
+
+docker:
 ``` bash
 docker container run --rm \
                      -v /path_to_root_data_dir/:/data \
@@ -89,8 +101,14 @@ directory structure as described [here](https://www.synapse.org/#!Synapse:syn276
 After unpacking the .zip files videos need to be sampled at 10Hz which can be done
 by running the following
 
-Docker container:
+installed using pip:
 
+``` bash 
+rarptk unpack /path_to_root_data_dir/ -j4 -r
+```
+
+
+Docker container:
 ``` bash
 docker container run --rm \
                      -v /path_to_root_data_dir/:/data/ \
@@ -106,16 +124,23 @@ python -m scripts.sarrarp_tk unpack /path_to_root_data_dir/ -j4 -r
 
 The `unpack` script exposes the following command line interface
 
-unpack video_dir [--recursive`] [--jobs`]
+unpack video_dir [`--recursive`] [`--jobs`]
 
 - `data_dir`: path pointing to the dataset or video directory
 - [`-r`, `--recursive`] : search recursively for video directories that have video_left.avi as a child
-- [`-j`,`--jobs`] : number of concurrent jobs to run while exporting .png files
+- [`-j`, `--jobs`] : number of concurrent jobs to run while exporting .png files
+- [`-f`, `--frequency`] : sampling rate in Hz, choices=[1, 10], default=10
 
 ### Generating mock predictions
 
 To generate mock predictions run the following
 
+installed using pip:
+```bash
+rarptk generate /path_to_root_data_dir/test/ /path_to_root_data_dir/mock_predictions/ 
+```
+
+docker:
 ``` bash
 docker container run --rm \
                      -v /path_to_root_data_dir/:/data/ \
@@ -149,6 +174,12 @@ generate predictions in the required format.
 After a given algorithms stores predictions under /path_to_root_data_dir/predictions/
 in the host filesystem, you can evaluate by running the following
 
+installed using pip:
+``` bash
+rarptk evaluate /path_to_root_data_dir/ref_set/ /path_to_root_data_dir/predictions/ 
+```
+
+docker:
 ``` bash
 docker container run --rm \
                      -v /path_to_root_data_dir/:/data/ \
@@ -170,6 +201,7 @@ evaluate ref_dir prediction_dir [--ignore_actions] [--ignore_segmentation]
 - `prediction_dir` : absolute path to the directory predictions are stored
 - [`--ignore_actions`] : do not perform action recognition evaluation
 - [`--ignore_segmentation`] : do not perform segmentation evaluation
+- [`--class_errors`] : save per-class scores for segmentation aggregated in video level
 
 After a quick file structure evaluation, the script will compute the accuracy of the predictions
 as described [here](https://www.synapse.org/#!Synapse:syn27618412/wiki/617968)
