@@ -1,7 +1,6 @@
 import argparse
 from pathlib import Path
 import logging
-import cv2
 import numpy as np
 import pandas as pd
 from sarrarp50.utils import TqdmLoggingHandler, validate_prediction_dir
@@ -11,29 +10,48 @@ from tqdm import tqdm
 
 
 
+SEG_COLOR_DICT={
+            1:{'label': 'Tool Clasper', 'color':'#00FFFF'},
+            2:{'label': 'Tool Wrist', 'color':'#7DFF0C'},
+            # 3:{'label': 'Tool Shaft', 'color':'#00FF00'},
+            3:{'label': 'Tool Shaft', 'color':'#0000FF'},
+            4:{'label': 'Suturing Needle', 'color':'#FFFF7D'},
+            5:{'label': 'Thead', 'color':'#BB9B19'}, 
+            6:{'label': 'Suction Tool', 'color':'#7B0FAF'},
+            7:{'label': 'Needle Holder', 'color':'#F5A623'},
+            # 8:{'label': 'Clamps', 'color':'#00FF7D'},
+            8:{'label': 'Clamps', 'color':'#FF0000'},
+            9:{'label': 'Catheter', 'color':'#9B9B9B'}
+            }
+
+
+def get_parser():
+    parser =argparse.ArgumentParser()
+    parser.add_argument('ref_dir', help='path to directory containing video_xx directories with reference information')
+    parser.add_argument('prediction_dir', help='path to directory containing predictions')
+    parser.add_argument('--ignore_actions', help='do not evaluate action recognition', action='store_true')
+    parser.add_argument('--ignore_segmentation', help='do not evaluate instrument segmentation',  action='store_true')
+    parser.add_argument('--class_errors', help='save per-class scores for segmentation', action='store_true')
+    return parser
+
 def main(args):
 
 
     logging.basicConfig(encoding='utf-8', level=logging.INFO,
                         handlers=[logging.FileHandler(Path(args.prediction_dir)/"evaluation.log"),
                         TqdmLoggingHandler()])
-
-
     try:
         ref_video_dirs, pred_video_dirs = validate_prediction_dir(args.ref_dir, 
                                                                   args.prediction_dir,
-                                                                  not args.ignore_actions,
-                                                                  not args.ignore_segmentation)
+                                                                  not args.ignore_segmentation,
+                                                                  not args.ignore_actions)
         logging.info('file structure validation passed')
     except (FileNotFoundError, ValueError)as f_e:
         logging.error(f_e)
         return 1
-
+    
     NSD_tau=10
-
-    
-    
-    
+ 
     results={'video_id': [('_').join(video_dir.name.split('_')[1:]) for video_dir in ref_video_dirs]}
     if not args.ignore_segmentation:
         results['seg_mIoU']=[]
@@ -46,9 +64,18 @@ def main(args):
                                   bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}',
                                   total = len(ref_video_dirs)):
         if not args.ignore_segmentation:
-            results['seg_mIoU'].append(np.array(mIoU(pred_dir, ref_dir, n_classes=9)).mean(axis=1).mean().item())
+            dataset_err = np.array(mIoU(pred_dir, ref_dir, n_classes=9))
+            if args.class_errors:
+                dataset_df = pd.DataFrame(dataset_err, columns= [SEG_COLOR_DICT[i]['label'] for i in range(1,10)])
+                dataset_df.describe().to_csv(pred_dir.parent/(pred_dir.name+'_class_stats_iou.csv'))
+            results['seg_mIoU'].append(dataset_err.mean(axis=1).mean().item())
             logging.info(f"{ref_dir.name} segmentaiton mIoU: {results['seg_mIoU'][-1]}")
-            results['seg_mNSD'].append(np.array(mNSD(pred_dir, ref_dir,n_classes=9, channel_tau=[NSD_tau]*9)).mean(axis=1).mean().item())
+            
+            dataset_err = np.array(mNSD(pred_dir, ref_dir,n_classes=9, channel_tau=[NSD_tau]*9))
+            if args.class_errors:
+                dataset_df = pd.DataFrame(dataset_err, columns= [SEG_COLOR_DICT[i]['label'] for i in range(1,10)])
+                dataset_df.describe().to_csv(pred_dir.parent/(pred_dir.name+'_class_stats_nsd.csv'))
+            results['seg_mNSD'].append(dataset_err.mean(axis=1).mean().item())
             logging.info(f"{ref_dir.name} segmentation mNSD: {results['seg_mNSD'][-1]}")
         if not args.ignore_actions:
             results['ar_acc'].append(accuracy(pred_dir, ref_dir))
@@ -58,9 +85,7 @@ def main(args):
 
             
     df = pd.DataFrame(results)
-    #aggreegate
     m_df = df.mean()
-
 
     if not args.ignore_segmentation:
         m_df['segmentation_score']= (df['seg_mIoU'].mean() * df['seg_mNSD'].mean())**(0.5)
@@ -76,11 +101,7 @@ def main(args):
     logging.info(m_df)
 
 if __name__ == "__main__":
-    parser =argparse.ArgumentParser()
-    parser.add_argument('ref_dir')
-    parser.add_argument('prediction_dir')
-    parser.add_argument( '--ignore_actions', action='store_true')
-    parser.add_argument( '--ignore_segmentation', action='store_true')
+    parser = get_parser()
     args = parser.parse_args()
     if (args.ignore_actions and args.ignore_segmentation):
         parser.error('--ignore_actions and --ignore_segmentation flags cannot be set at the same time')

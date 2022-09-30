@@ -1,4 +1,3 @@
-from pickletools import uint8
 import torch
 import monai
 import cv2

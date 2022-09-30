@@ -1,26 +1,20 @@
 import argparse
 import sys
-from scripts.evaluate import main as main_e
+import scripts.evaluate as eval
 from scripts.generate_mock_predictions import main as main_g
 from scripts.sample_video import main as main_u
 
-
-if __name__ == "__main__":
-    
-    parser = argparse.ArgumentParser()
-    parser.add_argument('command', help='Subcommand to run', choices=['evaluate', 'generate', 'unpack'])
+def main ():
+    parser = argparse.ArgumentParser(description="SAR-RARP50 cmd toolkit", usage="rarptk COMMAND [OPTIONS]")
+    parser.add_argument('command', help='specify command to run', choices=['evaluate', 'generate', 'unpack'])
     cmd_tool = parser.parse_args(sys.argv[1:2])
     print (cmd_tool.command)
     if cmd_tool.command == 'evaluate':
-        parser =argparse.ArgumentParser()
-        parser.add_argument('ref_dir')
-        parser.add_argument('prediction_dir')
-        parser.add_argument( '--ignore_actions', action='store_true')
-        parser.add_argument( '--ignore_segmentation', action='store_true')
+        parser = eval.get_parser()
         args = parser.parse_args(sys.argv[2:])
         if (args.ignore_actions and args.ignore_segmentation):
             parser.error('--ignore_actions and --ignore_segmentation flags cannot be set at the same time')
-        SystemExit(main_e(args))
+        SystemExit(eval.main(args))
 
         
     elif cmd_tool.command == 'unpack':
@@ -41,3 +35,8 @@ if __name__ == "__main__":
         SystemExit(main_g(args))
     else:
         raise NotImplementedError
+    
+
+if __name__ == "__main__":
+    main()
+   
